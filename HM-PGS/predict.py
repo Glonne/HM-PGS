@@ -12,8 +12,8 @@ import torch.nn as nn
 from torch_geometric.data import Data
 from torch_sparse import SparseTensor
 
-from HGCNMULTI import HGCNMHR  # 你自定义的模型
-from model import MultiATHR    # 如果你需要
+from HM_PGS import HM_PGS  # 你自定义的模型
+from model import HM_PGS
 from util import presDataset, llprint, multi_label_metric
 import torch.nn.functional as F
 
@@ -148,7 +148,7 @@ def main_train(args):
     EPOCH = args.num_epoch
     LR = args.lr
 
-    model = HGCNMHR(1366, 956, 2322, 16, 1).to(devices)
+    model = HM_PGS(1366, 956, 2322, 16, 1).to(devices)
     criterion = torch.nn.BCEWithLogitsLoss(reduction="mean")
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=0.8)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=25, gamma=0.5)
@@ -297,7 +297,6 @@ def main_train(args):
     total_test_time += (test_end_time - test_start_time)
     test_size = sum(len(x) for x in test_dataset)
     avg_test_loss = test_loss / len(test_dataset)
-    print("================================test开始=================================")
     print('test_loss: ', avg_test_loss)
     print('p@5-10-20:', test_p5/test_size, test_p10/test_size, test_p20/test_size)
     print('r@5-10-20:', test_r5/test_size, test_r10/test_size, test_r20/test_size)
@@ -307,7 +306,6 @@ def main_train(args):
     f1_20 = 2*(test_p20/test_size)*(test_r20/test_size)/( (test_p20/test_size)+(test_r20/test_size) ) if (test_p20+test_r20)>0 else 0
 
     print('f1_5-10-20: ', f1_5, f1_10, f1_20)
-    print("===========================================")
     print('eval time：', total_val_time)
     print('train time：', total_train_time)
     print('test time：', total_test_time)
@@ -320,7 +318,7 @@ def load_mapping(file_path):
     return mapping
 
 def map_ids_to_names(ids, mapping):
-    return [mapping.get(i, f"未知ID({i})") for i in ids]
+    return [mapping.get(i, f"unknown ID({i})") for i in ids]
 def parse_test_dataset(raw_dataset):
     parsed_dataset = []
     for case in raw_dataset:
@@ -340,7 +338,7 @@ def main():
         symptom_ids = [int(x) for x in args.symptoms.split(',')]
         device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
         sh_data, sh_data_s, ss_data, ss_data_s, hh_data, hh_data_s, hd_data, hd_data_s = load_graph_data(devices=device)
-        model = HGCNMHR(1366, 956, 2322, 16, 1).to(device)
+        model = HM_PGS(1366, 956, 2322, 16, 1).to(device)
         print(f"Loading model from {args.model_path}")
         state_dict = torch.load(args.model_path, map_location=device)
         model.load_state_dict(state_dict)
@@ -439,7 +437,7 @@ def case_study(
         })
     df = pd.DataFrame(results)
     df.to_excel(output_excel, index=False)
-    print(f"案例分析结果已保存到 {output_excel}")
+    print(f"save result to {output_excel}")
     def print_cases(cases, title):
         print(f"\n{title}")
         print("-" * 90)

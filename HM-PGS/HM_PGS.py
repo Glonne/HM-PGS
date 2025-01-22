@@ -50,9 +50,9 @@ class NCModel(nn.Module):
     def compute_metrics(self, embeddings, data):
         output = self.decode(embeddings,data)
         return output
-class HGCNMHR(torch.nn.Module):
+class HM_PGS(torch.nn.Module):
     def __init__(self, ss_num, hh_num, sh_num, embedding_dim, batchSize):
-        super(HGCNMHR, self).__init__()
+        super(HM_PGS, self).__init__()
         self.batchSize = batchSize
         self.voc_size=(ss_num,hh_num)
         self.SH_embedding = torch.nn.Embedding(sh_num, embedding_dim)

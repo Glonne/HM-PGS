@@ -12,8 +12,7 @@ from sklearn.model_selection import train_test_split
 import torch.nn as nn
 from torch_geometric.data import Data
 from torch_sparse import SparseTensor
-
-from HM_PGS import HGCNMHR
+from HM_PGS import HM_PGS
 from model import HM_PGS
 from util import presDataset, llprint, multi_label_metric
 import torch.nn.functional as F
@@ -56,7 +55,7 @@ def initialize_data(devices):
     sh_data_adj = SparseTensor(row=sh_data.edge_index[0], col=sh_data.edge_index[1],
                                sparse_sizes=(1353, 1353))
     sh_data_row, sh_data_col = sh_data.edge_index[0], sh_data.edge_index[1]
-    sh_data_values = torch.ones(257).to(devices) #30
+    sh_data_values = torch.ones(257).to(devices)
     sh_data_size = (1353, 1353)
     sh_data_s = torch.sparse_coo_tensor(indices=torch.stack([sh_data_row, sh_data_col]), values=sh_data_values, size=sh_data_size).to(devices)
     ss_edge = np.load('./data/ss_graph.npy')
@@ -67,7 +66,7 @@ def initialize_data(devices):
     ss_data_adj = SparseTensor(row=ss_data.edge_index[0], col=ss_data.edge_index[1],
                                sparse_sizes=(974, 974))
     ss_data_row, ss_data_col = ss_data.edge_index[0], ss_data.edge_index[1]
-    ss_data_values = torch.ones(15455).to(devices)  # 30
+    ss_data_values = torch.ones(15455).to(devices)
     ss_data_size = (974,974)
     ss_data_s = torch.sparse_coo_tensor(indices=torch.stack([ss_data_row, ss_data_col]), values=ss_data_values,
                                         size=ss_data_size).to(devices)
@@ -78,7 +77,7 @@ def initialize_data(devices):
     hh_data_adj = SparseTensor(row=hh_data.edge_index[0], col=hh_data.edge_index[1],
                                sparse_sizes=(379, 379))
     hh_data_row, hh_data_col = hh_data.edge_index[0], hh_data.edge_index[1]
-    hh_data_values = torch.ones(10487).to(devices) #30
+    hh_data_values = torch.ones(10487).to(devices)
     hh_data_size = (379,379)
     hh_data_s = torch.sparse_coo_tensor(indices=torch.stack([hh_data_row, hh_data_col]), values=hh_data_values,
                                         size=hh_data_size).to(devices)
@@ -226,7 +225,7 @@ def test_model(model, test_dataset, voc_size, device, log_fp, sh_data, sh_data_s
                 f'{2 * (test_p10 / len(test_dataset)) * (test_r10 / len(test_dataset)) / ((test_p10 / len(test_dataset)) + (test_r10 / len(test_dataset)) + 1e-13):.4f}, '
                 f'{2 * (test_p20 / len(test_dataset)) * (test_r20 / len(test_dataset)) / ((test_p20 / len(test_dataset)) + (test_r20 / len(test_dataset)) + 1e-13):.4f}\n', log_fp)
     print_to_log("===========================================\n", log_fp)
-    print_to_log(f'总推理时间：{total_test_time:.2f}s\n', log_fp)
+    print_to_log(f'time ：{total_test_time:.2f}s\n', log_fp)
     return test_loss / len(test_dataset), {
         "p5": test_p5 / len(test_dataset),
         "p10": test_p10 / len(test_dataset),
@@ -267,9 +266,6 @@ def main():
         log_filename = f'{timestamp}_lr{current_args["lr"]}_epoch{current_args["num_epoch"]}.log'
         log_path = os.path.join(save_dir, log_filename)
         log_fp = open(log_path, 'w')
-        print_to_log(f"训练集大小: {len(train_data)}\n", log_fp)
-        print_to_log(f"验证集大小: {len(dev_data)}\n", log_fp)
-        print_to_log(f"测试集大小: {len(test_data)}\n", log_fp)
         model = HGCNMHR(973,379,1353,16,1).to(device)
         criterion = torch.nn.BCEWithLogitsLoss(reduction="mean")
         optimizer = torch.optim.Adam(model.parameters(), lr=current_args["lr"], weight_decay=0.8)
@@ -326,7 +322,7 @@ def main():
         print_to_log(f'p5-10-20: {test_metrics["p5"]:.4f}, {test_metrics["p10"]:.4f}, {test_metrics["p20"]:.4f}\n', log_fp)
         print_to_log(f'r5-10-20: {test_metrics["r5"]:.4f}, {test_metrics["r10"]:.4f}, {test_metrics["r20"]:.4f}\n', log_fp)
         print_to_log(f'f1_5-10-20: {test_metrics["f1_5"]:.4f}, {test_metrics["f1_10"]:.4f}, {test_metrics["f1_20"]:.4f}\n', log_fp)
-        print_to_log(f'总训练时间：{total_train_time:.2f}s\n', log_fp)
+        print_to_log(f'time：{total_train_time:.2f}s\n', log_fp)
         log_fp.close()
 
 if __name__ == '__main__':
