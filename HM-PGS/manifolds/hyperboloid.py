@@ -25,7 +25,6 @@ class Hyperboloid(Manifold):
         prod = self.minkowski_dot(x, y)
         theta = torch.clamp(-prod / K, min=1.0 + self.eps[x.dtype])
         sqdist = K * arcosh(theta) ** 2
-        # clamp distance to avoid nans in Fermi-Dirac decoder
         return torch.clamp(sqdist, max=50.0)
 
     def proj(self, x, c):
@@ -80,7 +79,7 @@ class Hyperboloid(Manifold):
         sqrtK = K ** 0.5
         d = u.size(-1) - 1
         x = u.narrow(-1, 1, d).view(-1, d)
-        x_norm = torch.norm(x, p=2, dim=1, keepdim=True)#20240331
+        x_norm = torch.norm(x, p=2, dim=1, keepdim=True)
         x_norm = torch.clamp(x_norm, min=self.min_norm)
         theta = x_norm.to('cuda') / sqrtK.to('cuda')
         res = torch.ones_like(u)

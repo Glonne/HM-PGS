@@ -12,7 +12,7 @@ import torch.nn as nn
 from torch_geometric.data import Data
 from torch_sparse import SparseTensor
 
-from HM_PGS import HM_PGS  # 你自定义的模型
+from HM_PGS import HM_PGS
 from model import HM_PGS
 from util import presDataset, llprint, multi_label_metric
 import torch.nn.functional as F
@@ -34,7 +34,6 @@ def get_args():
     return args
 
 def load_graph_data(devices='cuda'):
-    # S-H G
     sh_edge = np.load('./data/sh_graph.npy')
     sh_edge = sh_edge.tolist()
     sh_edge_index = torch.tensor(sh_edge, dtype=torch.long)
@@ -50,7 +49,6 @@ def load_graph_data(devices='cuda'):
         size=sh_data_size
     ).coalesce().to(devices)
 
-    # S-S G
     ss_edge = np.load('./data/ss_graph.npy')
     ss_edge = ss_edge.tolist()
     ss_edge_index = torch.tensor(ss_edge, dtype=torch.long)
@@ -66,7 +64,6 @@ def load_graph_data(devices='cuda'):
         size=ss_data_size
     ).coalesce().to(devices)
 
-    # H-H G
     hh_edge = np.load('./data/hh_graph.npy').tolist()
     hh_edge_index = torch.tensor(hh_edge, dtype=torch.long)
     hh_x = torch.tensor([[i] for i in range(1366, 2322)], dtype=torch.float)
@@ -81,7 +78,6 @@ def load_graph_data(devices='cuda'):
         size=hh_data_size
     ).coalesce().to(devices)
 
-    # DDI G (HD G)
     hd_edge = np.load('./data/ddi_graph.npy').tolist()
     hd_edge_index = torch.tensor(hd_edge,dtype=torch.long)
     hd_x = torch.tensor([[i] for i in range(1366, 2322)], dtype=torch.float)
@@ -118,7 +114,7 @@ def predict_symptoms_to_herbs(
             hh_data.x,  hh_data_s,
             hd_data_s,  seq_input
         )
-    preds = torch.sigmoid(outputs).squeeze(0)  # (956,)
+    preds = torch.sigmoid(outputs).squeeze(0)
     topk_scores, topk_indices = torch.topk(preds, k=topk)
     predicted_herbs = topk_indices.cpu().numpy().tolist()
     return predicted_herbs
@@ -184,7 +180,7 @@ def main_train(args):
         for step, patient_visits in enumerate(train_dataset):
             for idx, adm in enumerate(patient_visits):
                 seq_input = patient_visits[:idx+1]
-                loss_li_target = np.zeros((1, voc_size[1]))  # 1 x 956
+                loss_li_target = np.zeros((1, voc_size[1]))
                 loss_li_target[:, adm[1]] = 1
 
                 outputs, a, b = model(
@@ -277,7 +273,7 @@ def main_train(args):
                 loss_total = 0.9 * loss_bce + 0.1 * loss_contra
             test_loss += loss_total.item()
 
-            top5 = torch.topk(outputs, 5)[1]  # shape=[1,5]
+            top5 = torch.topk(outputs, 5)[1]
             count5 = sum(int(m in adm[1]) for m in top5[0])
             test_p5 += count5 / 5
             test_r5 += count5 / len(adm[1]) if len(adm[1])>0 else 0
@@ -287,7 +283,6 @@ def main_train(args):
             test_p10 += count10 / 10
             test_r10 += count10 / len(adm[1]) if len(adm[1])>0 else 0
 
-            # top20
             top20 = torch.topk(outputs, 20)[1]
             count20 = sum(int(m in adm[1]) for m in top20[0])
             test_p20 += count20 / 20
@@ -433,7 +428,7 @@ def case_study(
             "output": ", ".join(predicted_herbs),
             "Precision": precision,
             "Recall": recall,
-            "评论": comment
+            "comment": comment
         })
     df = pd.DataFrame(results)
     df.to_excel(output_excel, index=False)

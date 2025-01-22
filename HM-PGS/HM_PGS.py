@@ -21,12 +21,12 @@ class RETAIN(nn.Module):
         self.beta_net = nn.Linear(emb_dim * 2, emb_dim)
 
     def forward(self, i1_seq):
-        o1, h1 = self.encoder(i1_seq)                     # o1:(1, seq, dim*2) hi:(1,1,dim*2)
+        o1, h1 = self.encoder(i1_seq)
 
-        ej1 = self.alpha_net(o1)                          # (1, seq, 1)
-        bj1 = self.beta_net(o1)                           # (1, seq, dim)
+        ej1 = self.alpha_net(o1)
+        bj1 = self.beta_net(o1)
         att_ej1 = torch.softmax(ej1, dim=1)
-        o1 = att_ej1 * torch.tanh(bj1) * i1_seq # (1, dim)
+        o1 = att_ej1 * torch.tanh(bj1) * i1_seq
 
         return o1,h1
 class NCModel(nn.Module):
@@ -95,7 +95,7 @@ class HM_PGS(torch.nn.Module):
         self.tran = nn.Linear(4096, 379)
         self.abc = nn.Linear(256 * 2, 256)
         self.sample = nn.Linear(256, 1)
-        self.sample2 = nn.Linear(16, 1)  # 2024
+        self.sample2 = nn.Linear(16, 1)
         self.output = nn.Sequential(
             nn.ReLU(),
             nn.Linear(256*2 , embedding_dim * 2),
@@ -112,7 +112,7 @@ class HM_PGS(torch.nn.Module):
         max_visit_num = visit_diag_embedding.size(1)
         batch_size = visit_diag_embedding.size(0)
         new = visit_diag_embedding.size(2)
-        mask = (torch.triu(torch.ones((max_visit_num, max_visit_num), device=self.device)) == 1).transpose(0,                                                                                                 1)  # 返回一个下三角矩阵
+        mask = (torch.triu(torch.ones((max_visit_num, max_visit_num), device=self.device)) == 1).transpose(0,1)
         mask = mask.float().masked_fill(mask == 0, -1e9).masked_fill(mask == 1, float(0.0))
         mask = mask.unsqueeze(0).repeat(batch_size, 1, 1)
         padding = torch.zeros((batch_size, 1, new), device=self.device).float()
@@ -198,13 +198,13 @@ class HM_PGS(torch.nn.Module):
         w1 = torch.sigmoid(fun2)
         if len(input) > 1:
             history_keys = queries[:(queries.size(0) - 1)]
-            visit_weight = F.softmax(torch.mm(query, history_keys.t()), dim=-1)  # (1, seq-1)
-            weighted_values = visit_weight.mm(history_values)  # (1, size)
+            visit_weight = F.softmax(torch.mm(query, history_keys.t()), dim=-1)
+            weighted_values = visit_weight.mm(history_values)
 
             fact2 = torch.mm(weighted_values, eh)
         else:
             fact2 = fact1
-        output = self.output(torch.cat([query, fact1], dim=-1))  # query患者 fact1中药表示
+        output = self.output(torch.cat([query, fact1], dim=-1))
         a = w1 * (0.9 * output) + 1.85 * b
         ehr_graph = self.sample(eh)
         ddi_graph = self.sample2(x_hddi)

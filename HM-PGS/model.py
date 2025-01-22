@@ -88,7 +88,7 @@ class HM_PGS(nn.Module):
         self.SH_tanh_1_h = torch.nn.Tanh()
         self.convSS = GCNConv_SS_HH(emb_dim, 128,dorp=0.2,alpha=0.5)
         self.convHH = GCNConv_SS_HH(emb_dim, 256,alpha=0.5,dorp=drop)
-        self.conv_ddi = GCNConv_SS_HH(emb_dim,256,alpha=0.5,dorp=drop)#20240329
+        self.conv_ddi = GCNConv_SS_HH(emb_dim,256,alpha=0.5,dorp=drop)
         self.S_256 = torch.nn.Linear(128, 256)
         self.mlp = torch.nn.Linear(256, 256)
         self.SI_bn = torch.nn.BatchNorm1d(256)
@@ -117,7 +117,7 @@ class HM_PGS(nn.Module):
         self.abc = nn.Linear(256*2,256)
 
         self.sample = nn.Linear(256, 1)
-        self.sample2 = nn.Linear(956, 1)  # 2024
+        self.sample2 = nn.Linear(956, 1)
         self.sample3 = nn.Linear(112, 1)
 
         self.output = nn.Sequential(
@@ -134,7 +134,7 @@ class HM_PGS(nn.Module):
         max_visit_num = visit_diag_embedding.size(1)
         batch_size = visit_diag_embedding.size(0)
         new = visit_diag_embedding.size(2)
-        mask = (torch.triu(torch.ones((max_visit_num, max_visit_num), device=self.device)) == 1).transpose(0,                                                                                                 1)  # 返回一个下三角矩阵
+        mask = (torch.triu(torch.ones((max_visit_num, max_visit_num), device=self.device)) == 1).transpose(0,1)
         mask = mask.float().masked_fill(mask == 0, -1e9).masked_fill(mask == 1, float(0.0))
         mask = mask.unsqueeze(0).repeat(batch_size, 1, 1)
         padding = torch.zeros((batch_size, 1, new), device=self.device).float()
@@ -222,8 +222,8 @@ class HM_PGS(nn.Module):
         w1 = torch.sigmoid(fun2)
         if len(input) > 1:
             history_keys = queries[:(queries.size(0)-1)]
-            visit_weight = F.softmax(torch.mm(query, history_keys.t()),dim=-1)  # (1, seq-1)
-            weighted_values = visit_weight.mm(history_values)  # (1, size)
+            visit_weight = F.softmax(torch.mm(query, history_keys.t()),dim=-1)
+            weighted_values = visit_weight.mm(history_values)
 
             fact2 = torch.mm(weighted_values, eh)
         else:

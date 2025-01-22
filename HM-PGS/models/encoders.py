@@ -136,7 +136,6 @@ class Shallow(Encoder):
         self.all_nodes = torch.LongTensor(list(range(args.n_nodes)))
         layers = []
         if args.pretrained_embeddings is not None and args.num_layers > 0:
-            # MLP layers after pre-trained embeddings
             dims, acts = get_dim_act(args)
             if self.use_feats:
                 dims[0] = args.feat_dim + weights.shape[1]

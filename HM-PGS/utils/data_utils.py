@@ -70,11 +70,10 @@ def augment(adj, features, normalize_feats=True):
 
 
 def mask_edges(adj, val_prop, test_prop, seed):
-    np.random.seed(seed)  # get tp edges
+    np.random.seed(seed)
     x, y = sp.triu(adj).nonzero()
     pos_edges = np.array(list(zip(x, y)))
     np.random.shuffle(pos_edges)
-    # get tn edges
     x, y = sp.triu(sp.csr_matrix(1. - adj.toarray())).nonzero()
     neg_edges = np.array(list(zip(x, y)))
     np.random.shuffle(neg_edges)

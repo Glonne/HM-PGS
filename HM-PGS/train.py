@@ -279,7 +279,7 @@ def main():
 
             def forward(self, output1, output2, target, size_average=True):
                 target = target.to(self.device)
-                distances = (output2 - output1).pow(2).sum(1).to(self.device)  # squared distances
+                distances = (output2 - output1).pow(2).sum(1).to(self.device)
                 losses = 0.5 * (target.float() * distances +
                                 (1 + -1 * target).float() * F.relu(self.margin - (distances + self.eps).sqrt()).pow(2))
                 return losses.mean() if size_average else losses.sum()
@@ -308,7 +308,7 @@ def main():
                 best_epoch = epoch + 1
                 best_ja = ja
             end_time = time.time()
-            elapsed_time = (end_time - start_time) / 60  # 转换为分钟
+            elapsed_time = (end_time - start_time) / 60
             remaining_epochs = EPOCH - (epoch + 1)
             estimated_left_time = elapsed_time * remaining_epochs
             print_to_log(f'\tEpoch: {epoch + 1}, Loss: {running_loss:.4f}, One Epoch Time: {elapsed_time:.2f}m, Appro Left Time: {estimated_left_time:.2f}m\n', log_fp)

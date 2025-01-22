@@ -14,10 +14,8 @@ class DenseAtt(nn.Module):
 
     def forward (self, x, adj):
         n = x.size(0)
-        # n x 1 x d
         x_left = torch.unsqueeze(x, 1)
         x_left = x_left.expand(-1, n, -1)
-        # 1 x n x d
         x_right = torch.unsqueeze(x, 0)
         x_right = x_right.expand(n, -1, -1)
 
@@ -79,32 +77,23 @@ class SpGraphAttentionLayer(nn.Module):
         edge = adj._indices()
 
         h = torch.mm(input, self.W)
-        # h: N x out
         assert not torch.isnan(h).any()
-
-        # Self-attention on the nodes - Shared attention mechanism
         edge_h = torch.cat((h[edge[0, :], :], h[edge[1, :], :]), dim=1).t()
-        # edge: 2*D x E
 
         edge_e = torch.exp(-self.leakyrelu(self.a.mm(edge_h).squeeze()))
         assert not torch.isnan(edge_e).any()
-        # edge_e: E
 
         ones = torch.ones(size=(N, 1))
         if h.is_cuda:
             ones = ones.cuda()
         e_rowsum = self.special_spmm(edge, edge_e, torch.Size([N, N]), ones)
-        # e_rowsum: N x 1
 
         edge_e = self.dropout(edge_e)
-        # edge_e: E
 
         h_prime = self.special_spmm(edge, edge_e, torch.Size([N, N]), h)
         assert not torch.isnan(h_prime).any()
-        # h_prime: N x out
 
         h_prime = h_prime.div(e_rowsum)
-        # h_prime: N x out
         assert not torch.isnan(h_prime).any()
         return self.act(h_prime)
 

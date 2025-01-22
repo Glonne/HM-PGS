@@ -229,7 +229,6 @@ def multi_label_metric(y_gt, y_pred, y_prob):
     return ja, prauc, np.mean(avg_prc), np.mean(avg_recall), np.mean(avg_f1)
 
 def ddi_rate_score(record, path='./test_data/ddi_A_final_new.pkl'):
-    # ddi rate
     ddi_A = dill.load(open(path, 'rb'))
     all_cnt = 0
     dd_cnt = 0
