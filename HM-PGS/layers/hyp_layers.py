@@ -6,7 +6,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
 from torch.nn.modules.module import Module
-
 from layers.att_layers import DenseAtt
 
 
@@ -26,9 +25,6 @@ def get_dim_act_curv():
 
 
 class HNNLayer(nn.Module):
-    """
-    Hyperbolic neural networks layer.
-    """
 
     def __init__(self, manifold, in_features, out_features, c, dropout, act, use_bias):
         super(HNNLayer, self).__init__()
