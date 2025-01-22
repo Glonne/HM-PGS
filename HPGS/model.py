@@ -224,7 +224,6 @@ class HM_PGS(nn.Module):
             history_keys = queries[:(queries.size(0)-1)]
             visit_weight = F.softmax(torch.mm(query, history_keys.t()),dim=-1)
             weighted_values = visit_weight.mm(history_values)
-
             fact2 = torch.mm(weighted_values, eh)
         else:
             fact2 = fact1

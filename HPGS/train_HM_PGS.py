@@ -12,12 +12,12 @@ from sklearn.model_selection import train_test_split
 import torch.nn as nn
 from torch_geometric.data import Data
 from torch_sparse import SparseTensor
-from HM_PGS import HM_PGS
+from HPGS_models import HM_PGS
 from model import HM_PGS
 from util import presDataset, llprint, multi_label_metric
 import torch.nn.functional as F
 
-MODEL_NAME = 'HM-PGS'
+MODEL_NAME = 'HM_PGS'
 
 def llprint(message):
     sys.stdout.write(message)

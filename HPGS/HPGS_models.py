@@ -22,7 +22,6 @@ class RETAIN(nn.Module):
 
     def forward(self, i1_seq):
         o1, h1 = self.encoder(i1_seq)
-
         ej1 = self.alpha_net(o1)
         bj1 = self.beta_net(o1)
         att_ej1 = torch.softmax(ej1, dim=1)
@@ -34,8 +33,8 @@ class NCModel(nn.Module):
         super(NCModel, self).__init__()
         self.c = torch.tensor([2.])
         self.manifold= 'PoincareBall'
-        self.encoder = getattr(encoders, 'HGCN')(self.c)
-        self.decoder = model2decoder['HGCN'](self.c)
+        self.encoder = getattr(encoders, 'HGN_PGS')(self.c)
+        self.decoder = model2decoder['HGN_PGS'](self.c)
 
     def encode(self, x, adj):
         if self.manifold == 'Hyperboloid':
@@ -58,10 +57,10 @@ class HM_PGS(torch.nn.Module):
         self.SH_embedding = torch.nn.Embedding(sh_num, embedding_dim)
         self.SS_embedding = torch.nn.Embedding(ss_num,embedding_dim)
         self.HH_embedding = torch.nn.Embedding(sh_num,embedding_dim)
-        self.HGCNSS_Embedding=NCModel(n_nodes=ss_num,output_dim=embedding_dim)
-        self.HGCNSH_Embedding = NCModel(n_nodes=sh_num,output_dim=embedding_dim)
-        self.HGCNSH_Embedding2 = NCModel(n_nodes=sh_num, output_dim=embedding_dim)
-        self.HGCNHH_Embedding=NCModel(n_nodes=hh_num,output_dim=embedding_dim)
+        self.HGN_PGSSS_Embedding=NCModel(n_nodes=ss_num,output_dim=embedding_dim)
+        self.HGN_PGSSH_Embedding = NCModel(n_nodes=sh_num,output_dim=embedding_dim)
+        self.HGN_PGSSH_Embedding2 = NCModel(n_nodes=sh_num, output_dim=embedding_dim)
+        self.HGN_PGSHH_Embedding=NCModel(n_nodes=hh_num,output_dim=embedding_dim)
         self.sh_ems=torch.nn.Linear(16,16)
         self.SH_mlp_1 = torch.nn.Linear(16, 16)
         self.SH_bn_1_h = torch.nn.BatchNorm1d(16)
@@ -134,19 +133,19 @@ class HM_PGS(torch.nn.Module):
             x = torch.LongTensor(x)
             return x
         x_SH1 = self.SH_embedding(x_SH.long())
-        x_SH2 = self.HGCNSH_Embedding.encode(x_SH1.squeeze(), Spare_SH)
-        x_SH2=self.HGCNSH_Embedding.compute_metrics(x_SH2,Spare_SH)
+        x_SH2 = self.HGN_PGSSH_Embedding.encode(x_SH1.squeeze(), Spare_SH)
+        x_SH2=self.HGN_PGSSH_Embedding.compute_metrics(x_SH2,Spare_SH)
         x_SH3 = self.sh_ems(x_SH1.squeeze())
         x_SH2 = (x_SH2+x_SH3)/2.0
         x_SH2 = self.SH_mlp_1(x_SH2)
         x_SH2=self.SH_bn_1_h(x_SH2)
         x_SH2 = self.SH_tanh_1_h(x_SH2)
         x_ss1 = self.SS_embedding(x_SS.long())
-        x_ss2 = self.HGCNSS_Embedding.encode(x_ss1.squeeze(), Spare_SS)
-        x_ss2 = self.HGCNSS_Embedding.compute_metrics(x_ss2, Spare_SS)
+        x_ss2 = self.HGN_PGSSS_Embedding.encode(x_ss1.squeeze(), Spare_SS)
+        x_ss2 = self.HGN_PGSSS_Embedding.compute_metrics(x_ss2, Spare_SS)
         x_hh1 = self.HH_embedding(x_HH.long())
-        x_hh2 = self.HGCNHH_Embedding.encode(x_hh1.squeeze(),Spare_HH)
-        x_hh2 = self.HGCNHH_Embedding.compute_metrics(x_hh2,Spare_HH)
+        x_hh2 = self.HGN_PGSHH_Embedding.encode(x_hh1.squeeze(),Spare_HH)
+        x_hh2 = self.HGN_PGSHH_Embedding.compute_metrics(x_hh2,Spare_HH)
         x_hh2 = self.Ls(x_hh2)
         x_hddi = self.conv_ddi.encode(x_hh1.squeeze(), Spare_ddi)
         x_ddi = self.conv_ddi.compute_metrics(x_hddi,Spare_ddi)
@@ -211,4 +210,67 @@ class HM_PGS(torch.nn.Module):
         fin_e = ehr_graph.t()
         fin_d = ddi_graph.t()
         return a, fin_e, fin_d
+class HGN_PGS(torch.nn.Module):
+    def __init__(self, ss_num, hh_num, sh_num, embedding_dim, batchSize):
+        super(HGN_PGS, self).__init__()
+        self.batchSize = batchSize
+        self.SH_embedding = torch.nn.Embedding(sh_num, embedding_dim)
+        self.SS_embedding = torch.nn.Embedding(ss_num,embedding_dim)
+        self.HH_embedding = torch.nn.Embedding(sh_num,embedding_dim)
+
+        self.HGN_PGSSS_Embedding=NCModel(n_nodes=ss_num,output_dim=embedding_dim)
+        self.HGN_PGSSH_Embedding = NCModel(n_nodes=sh_num,output_dim=embedding_dim)
+        self.HGN_PGSSH_Embedding2 = NCModel(n_nodes=sh_num, output_dim=embedding_dim)
+        self.HGN_PGSHH_Embedding=NCModel(n_nodes=hh_num,output_dim=embedding_dim)
+        self.sh_ems=torch.nn.Linear(32,32)
+        self.SH_mlp_1 = torch.nn.Linear(32, 32)
+
+        self.SH_bn_1_h = torch.nn.BatchNorm1d(32)
+        self.SH_tanh_1_h = torch.nn.Tanh()
+
+        self.concatsLinear = torch.nn.Linear(32*2,32)
+        self.concathLinear = torch.nn.Linear(32*2,32)
+
+        self.L = torch.nn.Linear(32+27,32)
+        self.mlp = torch.nn.Linear(32, 32)
+        self.SI_bn = torch.nn.BatchNorm1d(32)
+        self.relu = torch.nn.ReLU()
+
+
+    def forward(self, x_SH, Spare_SH,x_SS,Spare_SS,x_HH,Spare_HH,prescription, kgOneHot):
+        x_SH1 = self.SH_embedding(x_SH.long())
+        x_SH2 = self.HGN_PGSSH_Embedding.encode(x_SH1.squeeze(), Spare_SH)
+        x_SH2 = self.HGN_PGSSH_Embedding.compute_metrics(x_SH2,Spare_SH)
+        x_SH4 = self.HGN_PGSSH_Embedding2.encode(x_SH2,Spare_SH)
+        x_SH5 = self.HGN_PGSSH_Embedding2.compute_metrics(x_SH4,Spare_SH)
+        x_SH3 = self.sh_ems(x_SH1.squeeze())
+        x_SH2 = (x_SH2+x_SH3+x_SH5)/3.0
+        x_SH2 = self.SH_mlp_1(x_SH2)
+        x_SH2 = self.SH_bn_1_h(x_SH2)
+        x_SH2 = self.SH_tanh_1_h(x_SH2)
+
+        x_ss1 = self.SS_embedding(x_SS.long())
+        x_ss2 = self.HGN_PGSSS_Embedding.encode(x_ss1.squeeze(), Spare_SS)
+        x_ss2 = self.HGN_PGSSS_Embedding.compute_metrics(x_ss2, Spare_SS)
+
+        x_hh1 = self.HH_embedding(x_HH.long())
+        x_hh2 = self.HGN_PGSHH_Embedding.encode(x_hh1.squeeze(),Spare_HH)
+        x_hh2 = self.HGN_PGSHH_Embedding.compute_metrics(x_hh2,Spare_HH)
+        x_hh2 = torch.cat((x_hh2.float(), kgOneHot), dim=-1)
+        x_hh2 = self.L(x_hh2)
+        es = torch.cat([x_SH2[:390], x_ss2], dim=1)
+        es = self.concatsLinear(es)
+        eh = torch.cat([x_SH2[390:],x_hh2],dim=1)
+        eh = self.concathLinear(eh)
+        es = es.view(390, -1)
+        e_synd = torch.mm(prescription, es)
+        preSum = prescription.sum(dim=1).view(-1, 1)
+        e_synd_norm = e_synd / preSum
+        e_synd_norm = self.mlp(e_synd_norm)
+        e_synd_norm = e_synd_norm.view(-1, 32)
+        e_synd_norm = self.SI_bn(e_synd_norm)
+        e_synd_norm = self.relu(e_synd_norm)
+        eh = eh.view(805, -1)
+        pre = torch.mm(e_synd_norm, eh.t())
+        return pre
 
