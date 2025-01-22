@@ -102,7 +102,6 @@ class SpGraphAttentionLayer(nn.Module):
 
 class GraphAttentionLayer(nn.Module):
     def __init__(self, input_dim, output_dim, dropout, activation, alpha, nheads, concat):
-        """Sparse version of GAT."""
         super(GraphAttentionLayer, self).__init__()
         self.dropout = dropout
         self.output_dim = output_dim
