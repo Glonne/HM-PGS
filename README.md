@@ -1,10 +1,12 @@
-# HM-PGS
+# HPGS
 
-This repository is the implementation of HM-PGS
+This repository is the implementation of HPGS. It includes two models: HGN-PGS and HM-PGS.
 
-# Required packages
+# HGN-PGS:
 
-torch == 1.5.0+cpu
+## Required packages
+
+torch == 1.5.0+cu101
 
 torch-geometric == 1.4.3 
 
@@ -12,13 +14,33 @@ numpy == 1.18.1
 
 pandas == 1.0.1
 
-sklearn == 0.22.1
+scikit-learn == 0.22.1
 
-# Usage
+## Usage
 
 train and test 
 
-```python train.py```
+```python train_HGN_PGS.py```
+
+# HGN-PGS:
+
+## Required packages
+
+torch == 1.5.0+cu101
+
+torch-geometric == 1.4.3
+
+numpy == 1.22.1
+
+pandas == 1.0.1
+
+scikit-learn == 0.22.1
+
+## Usage
+
+train and test 
+
+```python train_HM_PGS.py```
 
 predict
 
