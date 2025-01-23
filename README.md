@@ -22,7 +22,7 @@ train and test
 
 ```python train_HGN_PGS.py```
 
-# HGN-PGS:
+# HM-PGS:
 
 ## Required packages
 
